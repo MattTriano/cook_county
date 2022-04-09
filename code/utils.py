@@ -7,6 +7,7 @@ from urllib.request import urlretrieve
 import geopandas as gpd
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype, is_bool_dtype, is_bool
+import requests
 from shapely.geometry import Point
 
 
@@ -17,14 +18,9 @@ def get_df_column_details(df: pd.DataFrame) -> pd.DataFrame:
         {
             "feature": [col for col in col_list],
             "unique_vals": [df[col].nunique() for col in col_list],
-            "pct_unique": [
-                round(100 * df[col].nunique() / n_rows, 4) for col in col_list
-            ],
+            "pct_unique": [round(100 * df[col].nunique() / n_rows, 4) for col in col_list],
             "null_vals": [df[col].isnull().sum() for col in col_list],
-            "pct_null": [
-                round(100 * df[col].isnull().sum() / n_rows, 4)
-                for col in col_list
-            ],
+            "pct_null": [round(100 * df[col].isnull().sum() / n_rows, 4) for col in col_list],
         }
     )
     df_details = df_details.sort_values(by="unique_vals")
@@ -156,9 +152,7 @@ def transform_date_columns(
     return df
 
 
-def map_column_to_boolean_values(
-    series: pd.Series, true_values: List[str]
-) -> pd.DataFrame:
+def map_column_to_boolean_values(series: pd.Series, true_values: List[str]) -> pd.DataFrame:
     series = series.copy()
     true_mask = series.isin(true_values)
     if is_bool_dtype(series) or is_bool(series):
@@ -175,8 +169,17 @@ def typeset_simple_boolean_columns(df: pd.DataFrame, boolean_columns: List[str])
     return df
 
 
+def get_socrata_table_metadata(table_id: str) -> Dict:
+    api_call = f"http://api.us.socrata.com/api/catalog/v1?ids={table_id}"
+    response = requests.get(api_call)
+    if response.status_code == 200:
+        response_json = response.json()
+        results = {"_id": table_id, "time_of_collection": datetime.utcnow()}
+        results.update(response_json["results"][0])
+        return results
+
+
 if __name__ == "__main__":
     root_dir = get_project_root_path()
     print(root_dir)
     print(os.listdir(root_dir))
-    
