@@ -127,11 +127,15 @@ def transform_cook_county_property_locations(df: pd.DataFrame) -> pd.DataFrame:
     df = typeset_ordered_categorical_fs_flood_risk_direction_feature(df=df)
     return df
 
+
 def load_preprocessed_cook_county_property_locations(
-    root_dir: os.path = get_project_root_dir(), force_repull: bool = False,
-    force_remake: bool = False
+    root_dir: os.path = get_project_root_dir(),
+    force_repull: bool = False,
+    force_remake: bool = False,
 ) -> pd.DataFrame:
-    file_path=os.path.join(root_dir, "data_intermediate", "cook_county_property_locations.parquet.gzip")
+    file_path = os.path.join(
+        root_dir, "data_intermediate", "cook_county_property_locations.parquet.gzip"
+    )
     if not os.path.isfile(file_path) or force_remake:
         property_locations_df = load_raw_cook_county_property_locations(
             root_dir=root_dir, force_repull=force_repull

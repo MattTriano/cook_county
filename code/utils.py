@@ -7,7 +7,12 @@ from urllib.request import urlretrieve
 
 import geopandas as gpd
 import pandas as pd
-from pandas.api.types import is_datetime64_any_dtype, is_bool_dtype, is_bool
+from pandas.api.types import (
+    is_datetime64_any_dtype,
+    is_bool_dtype,
+    is_bool,
+    CategoricalDtype,
+)
 import requests
 from shapely.geometry import Point
 
@@ -88,16 +93,18 @@ def geospatialize_df_with_point_geometries(
     return gdf
 
 
-def typeset_datetime_column(dt_series: pd.Series, dt_format: Optional[str]) -> pd.Series:
+def typeset_datetime_column(
+    dt_series: pd.Series, dt_format: Optional[str], errors: str = "coerce"
+) -> pd.Series:
     dt_series = dt_series.copy()
     if not is_datetime64_any_dtype(dt_series):
         if dt_format is not None:
             try:
-                dt_series = pd.to_datetime(dt_series, format=dt_format)
+                dt_series = pd.to_datetime(dt_series, format=dt_format, errors=errors)
             except:
-                dt_series = pd.to_datetime(dt_series)
+                dt_series = pd.to_datetime(dt_series, errors=errors)
         else:
-            dt_series = pd.to_datetime(dt_series)
+            dt_series = pd.to_datetime(dt_series, errors=errors)
     return dt_series
 
 
@@ -111,6 +118,7 @@ def drop_columns(df: pd.DataFrame, columns_to_drop: List) -> pd.DataFrame:
 
 def standardize_column_names(df: pd.DataFrame) -> pd.DataFrame:
     df.columns = ["_".join(col.lower().split(" ")) for col in df.columns]
+    df.columns = [col.replace("'", "") for col in df.columns]
     return df
 
 
