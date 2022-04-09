@@ -74,3 +74,22 @@ def transform_cook_county_property_sales(df: pd.DataFrame) -> pd.DataFrame:
     df = preprocess_property_sales_deed_type_values(df=df)
     df["year"] = typeset_ordered_categorical_feature(series=df["year"])
     return df
+
+
+def load_preprocessed_cook_county_property_sales(
+    root_dir: os.path = get_project_root_dir(),
+    force_repull: bool = False,
+    force_remake: bool = False,
+) -> pd.DataFrame:
+    file_path = os.path.join(
+        root_dir, "data_intermediate", "cook_county_property_sales.parquet.gzip"
+    )
+    if not os.path.isfile(file_path) or force_remake:
+        property_sales_df = load_raw_cook_county_property_sales(
+            root_dir=root_dir, force_repull=force_repull
+        )
+        property_sales_df = transform_cook_county_property_sales(df=property_sales_df)
+        property_sales_df.to_parquet(path=file_path, compression="gzip")
+    else:
+        property_sales_df = pd.read_parquet(file_path)
+    return property_sales_df
