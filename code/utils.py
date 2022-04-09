@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 import os
 import re
 from typing import Dict, List, Union, Optional
@@ -113,6 +114,16 @@ def standardize_column_names(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def standardize_and_zerofill_intlike_values_to_str(
+    series: pd.Series, zerofill: Optional[int] = None
+) -> pd.Series:
+    if zerofill is not None:
+        series = series.astype("Int64").astype("string").str.zfill(zerofill)
+    else:
+        series = series.astype("Int64").astype("string")
+    return series
+
+
 def standardize_mistakenly_int_parsed_categorical_series(
     series: pd.Series, zerofill: Optional[int] = None
 ) -> pd.Series:
@@ -177,6 +188,11 @@ def get_socrata_table_metadata(table_id: str) -> Dict:
         results = {"_id": table_id, "time_of_collection": datetime.utcnow()}
         results.update(response_json["results"][0])
         return results
+
+
+def dump_socrata_metadata_to_json(table_metadata: Dict, file_path: os.path) -> None:
+    with open(file_path, "w", encoding="utf-8") as json_file:
+        json.dump(table_metadata, json_file, ensure_ascii=False, indent=4, default=str)
 
 
 if __name__ == "__main__":
