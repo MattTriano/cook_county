@@ -6,6 +6,8 @@ from pandas.api.types import CategoricalDtype
 from utils import (
     extract_file_from_url,
     get_project_root_dir,
+    typeset_simple_boolean_columns,
+    typeset_simple_category_columns,
     standardize_mistakenly_int_parsed_categorical_series,
     standardize_and_zerofill_intlike_values_to_str,
 )
@@ -124,3 +126,18 @@ def transform_cook_county_property_locations(df: pd.DataFrame) -> pd.DataFrame:
     df = typeset_ordered_categorical_fs_flood_factor_feature(df=df)
     df = typeset_ordered_categorical_fs_flood_risk_direction_feature(df=df)
     return df
+
+def load_preprocessed_cook_county_property_locations(
+    root_dir: os.path = get_project_root_dir(), force_repull: bool = False,
+    force_remake: bool = False
+) -> pd.DataFrame:
+    file_path=os.path.join(root_dir, "data_intermediate", "cook_county_property_locations.parquet.gzip")
+    if not os.path.isfile(file_path) or force_remake:
+        property_locations_df = load_raw_cook_county_property_locations(
+            root_dir=root_dir, force_repull=force_repull
+        )
+        property_locations_df = transform_cook_county_property_locations(df=property_locations_df)
+        property_locations_df.to_parquet(path=file_path, compression="gzip")
+    else:
+        property_locations_df = pd.read_parquet(file_path)
+    return property_locations_df
